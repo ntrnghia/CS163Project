@@ -3,7 +3,7 @@ int main() {
 	//indexing
 	cout << "Initalizing, this may take several seconds...";
 
-	trie Tree;
+	Trie Tree;
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	Tree.indexing(FOLDER);
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
@@ -27,16 +27,16 @@ int main() {
 		while (sin >> word) query_initial.push_back(word);
 
 		high_resolution_clock::time_point t3 = high_resolution_clock::now();
-		vector<string>cache;
-		Tree.search_intersection_whole(query_initial, cache);
+		vector<string>output;
+		Tree.search_intersection_whole(query_initial, output);
 		high_resolution_clock::time_point t4 = high_resolution_clock::now();
 
 		high_resolution_clock::time_point t5 = high_resolution_clock::now();
-		for (string print : cache) cout << print << endl << endl;
+		for (const string &print : output) cout << print << endl << endl;
 		high_resolution_clock::time_point t6 = high_resolution_clock::now();
 
 		cout << "Indexing time: " << duration<double>(t2 - t1).count() << " seconds" << endl;
-		cout << cache.size() << " results (" << duration<double>(t4 - t3).count() << " seconds)" << endl;
+		cout << output.size() << " results (" << duration<double>(t4 - t3).count() << " seconds)" << endl;
 		cout << "Printing time: " << duration<double>(t6 - t5).count() << " seconds" << endl;
 
 		cout << "Press Enter to search the next keyword!";
