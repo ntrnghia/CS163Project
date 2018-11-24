@@ -22,7 +22,7 @@ public:
 private:
 	struct Data {
 		int title_size;
-		vector<string>content_vector;
+		vector<string>content;
 	};
 	vector<Data>data;
 	struct Cache {
@@ -33,7 +33,7 @@ private:
 		Cache(int x, int y):data_pos(x), pos({y}), priority(1){};
 	};
 	struct Node {
-		vector<Cache>cache;
+		vector<Cache>cache, smart_cache;
 		Node*child[ALPHABET];
 		Node(){for (auto&a:child) a=NULL;};
 	}*root;
@@ -47,7 +47,9 @@ private:
 	//querying
 	bool is_cache(const vector<string>&query)const;
 	vector<Cache>search(const vector<string>&)const;
+	vector<Cache>search_smart_cache(const vector<string>&query)const;
 	vector<string>get_content(const vector<Cache>&);
 	void make_cache(const vector<string>&query, const vector<Cache>&cache);
+	void make_smart_cache(const vector<string>&query, const vector<Cache>&cache);
 	void save_search_history(const vector<string>&query);
 };

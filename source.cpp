@@ -43,5 +43,6 @@ int main() {
 		cin.ignore(__INT_MAX__, '\n');
 	};
 	system("CLS");
+	Tree.~Trie();
 	cout << "Shuting down...\n";
 }

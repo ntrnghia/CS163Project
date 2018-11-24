@@ -17,11 +17,11 @@ void Trie::indexing(const string &folder) {
 			getline(fin, title);
 			istringstream sin(title);
 			string word;
-			while (sin >> word) tmp.content_vector.push_back(word), ++title_size;
+			while (sin >> word) tmp.content.push_back(word), ++title_size;
 			tmp.title_size=title_size;
-			while (fin >> word) tmp.content_vector.push_back(word);
+			while (fin >> word) tmp.content.push_back(word);
 			data.push_back(tmp);
-			for (int i=0; i<tmp.content_vector.size(); ++i) insertWord(tmp.content_vector[i], data.size()-1, i);
+			for (int i=0; i<tmp.content.size(); ++i) insertWord(tmp.content[i], data.size()-1, i);
 		}
 		fin.close();
 	} while (FindNextFileA(hFind, &fd));
@@ -62,7 +62,8 @@ void Trie::search_intersection_whole(const vector<string>&query_initial, vector<
 			if (get_query.size() == 1 || is_cache(get_query)) tmp_query = get_query, i = j + 1;
 		}
 		if (query.size() == 0 && i == query_initial.size()) {
-			output=get_content(search(tmp_query));
+			if (i==1) output=get_content(search(tmp_query));
+			else output=get_content(search_smart_cache(tmp_query));
 			save_search_history(query_initial);
 			return;
 		}
@@ -79,7 +80,7 @@ void Trie::search_intersection_whole(const vector<string>&query_initial, vector<
 	for (int i = 1; i < collected.size(); ++i) cache = IntersectVectorCache(cache, collected[i]);
 	make_cache(query, cache);
 	smart_cache(cache, query.size());
-	sort(cache.begin(), cache.end(), [&](const Cache &a, const Cache &b) {return a.priority > b.priority;});
+	make_smart_cache(query, cache);
 	output=get_content(cache);
 	save_search_history(query_initial);
 }
@@ -103,6 +104,7 @@ void Trie::smart_cache(vector<Cache>&cache, const int &size){
 			}
 		}
 	}
+	sort(cache.begin(), cache.end(), [&](const Cache &a, const Cache &b) {return a.priority > b.priority;});
 }
 
 Trie::Trie() {
@@ -114,12 +116,9 @@ Trie::~Trie() {
 }
 
 void Trie::remove(Node*root){
-	if (root){
-		for (auto a:root->child){
-			remove(a);
-			delete a;
-		}
-	}
+	if (!root) return;
+	for (auto a:root->child) remove(a);
+	delete root;
 }
 
 void Trie::insertWord(const string &word, int d, const int&pos) {
@@ -169,24 +168,41 @@ vector<Trie::Cache>Trie::search(const vector<string>&query)const {
 	return tmp->cache;
 }
 
+vector<Trie::Cache>Trie::search_smart_cache(const vector<string>&query)const {
+	Node*tmp = root;
+	for (int i = 0; i < query.size(); ++i) {
+		if (i != 0) {
+			if (!tmp->child[ALPHABET - 1]) return {};
+			tmp = tmp->child[ALPHABET - 1];
+		}
+		for (char j : query[i]) {
+			if (!isalpha(j)) continue;
+			int index = CHAR_TO_INDEX(j);
+			if (!tmp->child[index]) return {};
+			tmp = tmp->child[index];
+		}
+	}
+	return tmp->smart_cache;
+}
+
 vector<string>Trie::get_content(const vector<Cache>&cache){
 	vector<string>res;
 	for (const auto &a:cache){
-		int cs=data[a.data_pos].content_vector.size(), ts=data[a.data_pos].title_size;
+		int cs=data[a.data_pos].content.size(), ts=data[a.data_pos].title_size;
 		string content;
-		for (int i=0; i<ts; ++i) content+=data[a.data_pos].content_vector[i]+' ';
+		for (int i=0; i<ts; ++i) content+=data[a.data_pos].content[i]+' ';
 		content+='\n';
 		if (a.pos[0]<ts+PREVIEW/2){
-			for (int i=ts; i < ts+PREVIEW; ++i) content += data[a.data_pos].content_vector[i] + ' ';
+			for (int i=ts; i < ts+PREVIEW; ++i) content += data[a.data_pos].content[i] + ' ';
 			content+="...";
 		}
 		else if (a.pos[0]>cs-PREVIEW/2){
 			content+="...";
-			for (int i=cs-PREVIEW; i < cs; ++i) content += data[a.data_pos].content_vector[i] + ' ';
+			for (int i=cs-PREVIEW; i < cs; ++i) content += data[a.data_pos].content[i] + ' ';
 		}
 		else{
 			content+="...";
-			for (int i=a.pos[0]-PREVIEW/2; i < a.pos[0]+PREVIEW/2; ++i) content += data[a.data_pos].content_vector[i] + ' ';
+			for (int i=a.pos[0]-PREVIEW/2; i < a.pos[0]+PREVIEW/2; ++i) content += data[a.data_pos].content[i] + ' ';
 			content+="...";
 		}
 		res.push_back(content);
@@ -209,6 +225,23 @@ void Trie::make_cache(const vector<string>&query, const vector<Cache>&cache) {
 		}
 	}
 	tmp->cache = cache;
+}
+
+void Trie::make_smart_cache(const vector<string>&query, const vector<Cache>&cache) {
+	Node*tmp = root;
+	for (int i = 0; i < query.size(); ++i) {
+		if (i != 0) {
+			if (!tmp->child[ALPHABET - 1]) tmp->child[ALPHABET - 1]=new Node();
+			tmp = tmp->child[ALPHABET - 1];
+		}
+		for (char j : query[i]) {
+			if (!isalpha(j)) continue;
+			int index = CHAR_TO_INDEX(j);
+			if (!tmp->child[index]) tmp->child[index]=new Node();
+			tmp = tmp->child[index];
+		}
+	}
+	tmp->smart_cache = cache;
 }
 
 void Trie::save_search_history(const vector<string>&query) {
