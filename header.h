@@ -28,9 +28,8 @@ private:
 	struct Cache {
 		int data_pos;
 		vector<int> pos;
-		int priority;
 		Cache(int x):data_pos(x){};
-		Cache(int x, int y):data_pos(x), pos({y}), priority(1){};
+		Cache(int x, int y):data_pos(x), pos({y}){};
 	};
 	struct Node {
 		vector<Cache>cache, smart_cache;

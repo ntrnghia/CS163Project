@@ -43,7 +43,6 @@ vector<Trie::Cache>Trie::IntersectVectorCache(const vector<Cache>&left, const ve
 			}
 			while (l<il->pos.size()) tmp.pos.push_back(il->pos[l++]);
 			while (r<ir->pos.size()) tmp.pos.push_back(ir->pos[r++]);
-			tmp.priority=max(il->priority, ir->priority);
             result.push_back(tmp);
             ++il;
             ++ir;
@@ -87,24 +86,27 @@ void Trie::search_intersection_whole(const vector<string>&query_initial, vector<
 
 void Trie::smart_cache(vector<Cache>&cache, const int &size){
 	//size always > 1
-	for (auto &a:cache){
+	vector<pair<Cache,int>>priority;
+	for (int i=0; i<cache.size(); ++i){
+		priority.push_back({cache[i], 1});
 		vector<vector<int>>tmp(size-1); //[0] - 2 characters; [size-2] - size characters
-		for (int i=1, dis_cur=1; i<a.pos.size(); ++i){
-			if (a.pos[i]-a.pos[i-1]==1){
+		for (int j=1, dis_cur=1; j<cache[i].pos.size(); ++j){
+			if (cache[i].pos[j]-cache[i].pos[j-1]==1){
 				if (dis_cur<size) ++dis_cur;
-				tmp[dis_cur-2].push_back(a.pos[i]);
+				tmp[dis_cur-2].push_back(cache[i].pos[j]);
 			}
 			else dis_cur=1;
 		}
-		for (int i=size-2; i>=0; --i){
-			if (tmp[i].size()>0){
-				a.pos=tmp[i];
-				a.priority=i+2;
+		for (int j=size-2; j>=0; --j){
+			if (tmp[j].size()>0){
+				priority[i].first.pos=tmp[j];
+				priority[i].second=j+2;
 				break;
 			}
 		}
 	}
-	sort(cache.begin(), cache.end(), [&](const Cache &a, const Cache &b) {return a.priority > b.priority;});
+	sort(priority.begin(), priority.end(), [&](const pair<Cache,int>&a, const pair<Cache,int>&b) {return a.second > b.second;});
+	for (int i=0; i<cache.size(); ++i) cache[i]=priority[i].first;
 }
 
 Trie::Trie() {
